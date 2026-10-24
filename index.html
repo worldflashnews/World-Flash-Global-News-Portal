@@ -64,6 +64,37 @@ const items=[
 ];
 let category="Tout",query="",saved=new Set(),onlySaved=false,lang="fr";
 const $=s=>document.querySelector(s);
+ const NEWS_API = "https://worldflash-news-api.affofatima56.workers.dev/?language=fr";
+async function chargerActualites() {
+  try {
+    const reponse = await fetch(NEWS_API);
+    if (!reponse.ok) throw new Error("Erreur API");
+
+    const donnees = await reponse.json();
+
+    if (!donnees.results || donnees.results.length === 0) {
+      console.log("Aucune actualité disponible.");
+      return;
+    }
+
+    items.length = 0;
+
+    donnees.results.forEach((article, index) => {
+      items.push({
+        id: index + 1,
+        cat: article.category?.[0] || "Monde",
+        title: article.title || "Actualité",
+        description: article.description || "",
+        image: article.image_url || "",
+        link: article.link || ""
+      });
+    });
+
+    render();
+  } catch (erreur) {
+    console.error("Impossible de charger les actualités :", erreur);
+  }
+                  }
 function render(){let list=items.filter(x=>(category==="Tout"||x.cat===category)&&(!onlySaved||saved.has(x.id))&&((lang==="fr"?x.title+" "+x.desc:x.enTitle+" "+x.enDesc).toLowerCase().includes(query.toLowerCase())));$("#cards").innerHTML=list.map(x=>`<article class="card"><div class="category">${x.cat}</div><h3>${lang==="fr"?x.title:x.enTitle}</h3><p>${lang==="fr"?x.desc:x.enDesc}</p><div class="cardfoot"><span class="meta">${x.time} · ${lang==="fr"?"Exemple":"Sample"}</span><button class="save ${saved.has(x.id)?"saved":""}" data-save="${x.id}">${saved.has(x.id)?"★":"☆"} ${lang==="fr"?"Garder":"Save"}</button></div></article>`).join("");$("#empty").style.display=list.length?"none":"block";$("#resultCount").textContent=list.length+(lang==="fr"?" sujets":" topics");$("#savedList").textContent=saved.size?(lang==="fr"?saved.size+" article(s) enregistré(s).":saved.size+" saved article(s)."):(lang==="fr"?"Tes articles enregistrés apparaîtront ici.":"Your saved articles will appear here.");document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.cat===category));}
 $("#cards").addEventListener("click",e=>{const b=e.target.closest("[data-save]");if(!b)return;const id=+b.dataset.save;saved.has(id)?saved.delete(id):saved.add(id);render();toast(lang==="fr"?"Favoris mis à jour":"Favorites updated");});
 $("#nav").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;category=b.dataset.cat;onlySaved=false;render();});
@@ -75,6 +106,7 @@ $("#adminToggle").onclick=()=>$("#adminPanel").classList.toggle("open");
 $("#language").onchange=e=>{lang=e.target.value;document.documentElement.lang=lang;const t={fr:{tag:"Le monde, maintenant.",search:"Chercher",demo:"MODE DÉMO",all:"À la une",brief:"FLASH",ticker:"WorldFlash rassemble les sujets à suivre. Les articles ci-dessous sont des exemples de démonstration.",headline:"À la une",editor:"DOSSIER DU JOUR",sample:"Contenu de démonstration",heroTitle:"Comprendre le monde : les grandes questions à suivre aujourd’hui",heroDesc:"Un aperçu des enjeux internationaux, de l’économie, du climat et des innovations qui façonnent l’actualité.",read:"Explorer les sujets →",trending:"📈 Sujets à suivre",weather:"🌦️ Météo",weatherDemo:"Exemple d’affichage",weatherNote:"La météo n’est pas connectée à une source en direct dans cette maquette.",aiDesc:"Pose une question sur l’actualité ou demande un résumé. Cette démonstration montre l’interface, sans connexion à un modèle d’IA réel.",ask:"Demander",savedTitle:"★ Mes favoris",noSaved:"Tes articles enregistrés apparaîtront ici.",showSaved:"Afficher mes favoris",owner:"⚙️ Espace propriétaire",ownerDesc:"Aperçu des outils qui seront nécessaires pour gérer le portail.",adminBtn:"Ouvrir le tableau de bord démo",footer:"Prototype interactif — pas encore publié et non connecté aux flux d’actualités en direct."},en:{tag:"The world, right now.",search:"Search",demo:"DEMO MODE",all:"Top stories",brief:"FLASH",ticker:"WorldFlash brings together topics to follow. Articles below are demonstration examples.",headline:"Top stories",editor:"TODAY'S BRIEFING",sample:"Demonstration content",heroTitle:"Understand the world: key questions to follow today",heroDesc:"An overview of international affairs, the economy, climate and innovations shaping the news.",read:"Explore topics →",trending:"📈 Trending topics",weather:"🌦️ Weather",weatherDemo:"Display example",weatherNote:"Weather is not connected to a live source in this mockup.",aiDesc:"Ask a news question or request a summary. This demo shows the interface without a real AI model connection.",ask:"Ask",savedTitle:"★ My saved stories",noSaved:"Your saved stories will appear here.",showSaved:"Show my favorites",owner:"⚙️ Owner space",ownerDesc:"Preview of tools needed to manage the portal.",adminBtn:"Open demo dashboard",footer:"Interactive prototype — not published and not connected to live news feeds."}}[lang];document.querySelectorAll("[data-i18n]").forEach(el=>{if(t[el.dataset.i18n])el.textContent=t[el.dataset.i18n]});$("#searchInput").placeholder=lang==="fr"?"Rechercher une actualité, un sujet…":"Search news or a topic…";$("#aiQuestion").placeholder=lang==="fr"?"Ex. Résume les nouvelles…":"E.g. Summarize the news…";$("#showSaved").textContent=lang==="fr"?"Afficher mes favoris":"Show my favorites";render();};
 function toast(s){$("#toast").textContent=s;$("#toast").style.display="block";setTimeout(()=>$("#toast").style.display="none",1700)}
 $("#year").textContent=new Date().getFullYear();render();
+chargerActualites();
 </script>
 </body>
 </html>
